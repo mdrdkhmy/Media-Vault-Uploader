@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: files
+    description: Persistent media file operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,111 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /files:
+    get:
+      operationId: listFiles
+      tags: [files]
+      summary: List uploaded files
+      description: Returns all uploaded files, newest first.
+      responses:
+        "200":
+          description: Uploaded files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FileAsset"
+    post:
+      operationId: uploadFile
+      tags: [files]
+      summary: Upload a media file
+      description: Uploads an image, PDF, or video and returns its public URL.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/FileUploadInput"
+      responses:
+        "201":
+          description: Uploaded file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileAsset"
+        "400":
+          description: Unsupported file or invalid upload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "413":
+          description: File is too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /files/summary:
+    get:
+      operationId: getFilesSummary
+      tags: [files]
+      summary: Get storage summary
+      description: Returns counts and total bytes for the current media library.
+      responses:
+        "200":
+          description: Storage summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileSummary"
+  /files/{id}/content:
+    get:
+      operationId: getFileContent
+      tags: [files]
+      summary: Serve a public file
+      description: Streams an uploaded file with its original content type.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: File content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /files/{id}:
+    delete:
+      operationId: deleteFile
+      tags: [files]
+      summary: Permanently delete a file
+      description: Removes the file bytes and metadata from storage.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: File deleted
+        "404":
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +140,67 @@ components:
           type: string
       required:
         - status
+    FileUploadInput:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+        - file
+    FileAsset:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        url:
+          type: string
+        kind:
+          type: string
+          enum: [image, pdf, video]
+      required:
+        - id
+        - name
+        - mimeType
+        - size
+        - createdAt
+        - url
+        - kind
+    FileSummary:
+      type: object
+      properties:
+        totalFiles:
+          type: integer
+        totalBytes:
+          type: integer
+          format: int64
+        imageCount:
+          type: integer
+        pdfCount:
+          type: integer
+        videoCount:
+          type: integer
+      required:
+        - totalFiles
+        - totalBytes
+        - imageCount
+        - pdfCount
+        - videoCount
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
 
