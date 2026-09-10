@@ -61,7 +61,7 @@ netlify.toml                  Netlify build and routing configuration
 - `GET /api/files` — list files, newest first
 - `POST /api/files` — upload one multipart file using the `file` field
 - `GET /api/files/summary` — get counts and total bytes
-- `GET /api/files/:id/content` — access the public file
+- `GET /api/files/:id/:filename` — access the public file with its extension visible in the URL
 - `DELETE /api/files/:id` — permanently delete bytes and metadata
 
 The application accepts MIME types matching `image/*`, `video/*`, and `application/pdf`. Effective upload limits on Netlify depend on the limits of the selected Netlify plan and function runtime.

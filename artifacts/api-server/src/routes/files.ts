@@ -5,7 +5,6 @@ import { Router, type IRouter, type Request } from "express";
 import multer from "multer";
 import {
   DeleteFileParams,
-  GetFileContentParams,
   GetFilesSummaryResponse,
   ListFilesResponse,
   UploadFileResponse,
@@ -53,7 +52,7 @@ function getPublicOrigin(request: Request): string {
 function toResponse(file: StoredFile, request: Request) {
   return {
     ...file,
-    url: `${getPublicOrigin(request)}/api/files/${file.id}/content`,
+    url: `${getPublicOrigin(request)}/api/files/${file.id}/${encodeURIComponent(file.name)}`,
   };
 }
 
@@ -151,8 +150,8 @@ router.post(
   },
 );
 
-router.get("/files/:id/content", async (request, response): Promise<void> => {
-  const params = GetFileContentParams.safeParse(request.params);
+async function serveFile(request: Request, response: import("express").Response): Promise<void> {
+  const params = DeleteFileParams.safeParse(request.params);
   if (!params.success) {
     response.status(400).json({ error: params.error.message });
     return;
@@ -169,7 +168,10 @@ router.get("/files/:id/content", async (request, response): Promise<void> => {
   response.setHeader("Content-Disposition", `inline; filename*=UTF-8''${encodeURIComponent(file.name)}`);
   response.setHeader("Cache-Control", "public, max-age=31536000, immutable");
   response.sendFile(path.join(fileDirectory, file.id));
-});
+}
+
+router.get("/files/:id/content", serveFile);
+router.get("/files/:id/:filename", serveFile);
 
 router.delete("/files/:id", async (request, response): Promise<void> => {
   const params = DeleteFileParams.safeParse(request.params);

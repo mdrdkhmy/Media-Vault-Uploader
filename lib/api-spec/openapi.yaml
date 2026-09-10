@@ -84,7 +84,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FileSummary"
-  /files/{id}/content:
+  /files/{id}/{filename}:
     get:
       operationId: getFileContent
       tags: [files]
@@ -94,6 +94,12 @@ paths:
         - name: id
           in: path
           required: true
+          schema:
+            type: string
+        - name: filename
+          in: path
+          required: true
+          description: Original filename, retained so the public URL includes its extension.
           schema:
             type: string
       responses:

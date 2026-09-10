@@ -31,7 +31,7 @@ function getFileKind(mimeType: string): FileKind | null {
 function toResponse(file: StoredFile, origin: string) {
   return {
     ...file,
-    url: `${origin}/api/files/${file.id}/content`,
+    url: `${origin}/api/files/${file.id}/${encodeURIComponent(file.name)}`,
   };
 }
 
@@ -97,7 +97,7 @@ export default async (request: Request): Promise<Response> => {
     return json(toResponse(file, url.origin), 201);
   }
 
-  const contentMatch = route.match(/^\/files\/([^/]+)\/content$/);
+  const contentMatch = route.match(/^\/files\/([^/]+)\/(?:content|[^/]+)$/);
   if (request.method === "GET" && contentMatch) {
     const id = decodeURIComponent(contentMatch[1]);
     const file = await store.get(`${metadataPrefix}${id}.json`, {

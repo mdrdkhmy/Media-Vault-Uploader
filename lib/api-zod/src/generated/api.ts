@@ -70,7 +70,8 @@ export const GetFilesSummaryResponse = zod.object({
  * @summary Serve a public file
  */
 export const GetFileContentParams = zod.object({
-  "id": zod.coerce.string()
+  "id": zod.coerce.string(),
+  "filename": zod.coerce.string().describe('Original filename, retained so the public URL includes its extension.')
 })
 
 export const GetFileContentResponse = zod.unknown()
