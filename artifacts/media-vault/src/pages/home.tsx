@@ -21,7 +21,8 @@ import {
   HardDrive,
   Loader2,
   FileArchive,
-  Play
+  Play,
+  ArrowUpRight
 } from 'lucide-react';
 import { formatBytes, formatDate, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -260,6 +261,22 @@ export default function Home() {
           )}
         </div>
       </main>
+
+      <footer className="max-w-6xl mx-auto px-4 mt-16">
+        <div className="border-t py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <p>© {new Date().getFullYear()} Media Vault. All rights reserved.</p>
+          <a
+            href="https://mdrdkh.netlify.app/"
+            target="_blank"
+            rel="noreferrer"
+            className="group inline-flex items-center gap-2 font-semibold text-foreground transition-colors hover:text-[#a51d24]"
+          >
+            <span className="h-2 w-2 rotate-45 rounded-[1px] bg-[#a51d24]" aria-hidden="true" />
+            Crafted by Riyad Hossen
+            <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </a>
+        </div>
+      </footer>
 
       <AlertDialog open={!!fileToDelete} onOpenChange={(open) => !open && setFileToDelete(null)}>
         <AlertDialogContent>
