@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "HU-GLCemK0zY3Q_3w2Lb8"
+uri = "file://attached_assets/index_1789372619173.html"
+type = "text"
+title = "WhatsApp Hub with Media Vault Upload"
+description = "Updated standalone HTML with image, video, and PDF drag-and-drop uploads to media.apoa.com and automatic public URL insertion."
+logical_id = "ed39a0be-f4e3-4a18-81a2-a6343eab39b1"
+content_hash = "sha256:0c8eea71545462b30aa2e284494fcd802f23e6c1a9e1999e9d045de034d868b5"
+size = 21992
+mtime_ms = 1789372779739
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:3674ba14-78a2-4f4f-ab98-e1f8288808db/ed39a0be-f4e3-4a18-81a2-a6343eab39b1/34334d01-3145-4c1e-ad2f-711c84b54900"
+storage_version_token = "1789372865099193"
+content_type = "text/html"

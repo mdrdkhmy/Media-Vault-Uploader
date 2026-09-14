@@ -137,7 +137,7 @@ export default async (request: Request): Promise<Response> => {
     if (!file) return json({ error: "File not found." }, 404, request);
 
     const blob = await store.get(`${filePrefix}${id}`, { type: "blob" });
-    if (!blob) return json({ error: "File not found." }, 404);
+    if (!blob) return json({ error: "File not found." }, 404, request);
 
     return new Response(blob, {
       headers: {
