@@ -13,11 +13,27 @@ type StoredFile = {
 
 const metadataPrefix = "metadata/";
 const filePrefix = "files/";
+const allowedUploadOrigins = new Set(["https://whatsapp.apoa.com"]);
 
-function json(data: unknown, status = 200): Response {
+function corsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get("origin");
+  if (!origin || !allowedUploadOrigins.has(origin)) return {};
+
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    Vary: "Origin",
+  };
+}
+
+function json(data: unknown, status = 200, request?: Request): Response {
   return Response.json(data, {
     status,
-    headers: { "Cache-Control": "no-store" },
+    headers: {
+      "Cache-Control": "no-store",
+      ...(request ? corsHeaders(request) : {}),
+    },
   });
 }
 
@@ -51,20 +67,31 @@ export default async (request: Request): Promise<Response> => {
   const route = url.pathname.replace(/^\/\.netlify\/functions\/api/, "").replace(/^\/api/, "");
   const store = getStore("media-vault");
 
+  if (request.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders(request),
+    });
+  }
+
   if (request.method === "GET" && route === "/files") {
     const files = await listFiles(store);
-    return json(files.map((file) => toResponse(file, url.origin)));
+    return json(files.map((file) => toResponse(file, url.origin)), 200, request);
   }
 
   if (request.method === "GET" && route === "/files/summary") {
     const files = await listFiles(store);
-    return json({
-      totalFiles: files.length,
-      totalBytes: files.reduce((total, file) => total + file.size, 0),
-      imageCount: files.filter((file) => file.kind === "image").length,
-      pdfCount: files.filter((file) => file.kind === "pdf").length,
-      videoCount: files.filter((file) => file.kind === "video").length,
-    });
+    return json(
+      {
+        totalFiles: files.length,
+        totalBytes: files.reduce((total, file) => total + file.size, 0),
+        imageCount: files.filter((file) => file.kind === "image").length,
+        pdfCount: files.filter((file) => file.kind === "pdf").length,
+        videoCount: files.filter((file) => file.kind === "video").length,
+      },
+      200,
+      request,
+    );
   }
 
   if (request.method === "POST" && route === "/files") {
@@ -72,12 +99,16 @@ export default async (request: Request): Promise<Response> => {
     const uploaded = formData.get("file");
 
     if (!(uploaded instanceof File)) {
-      return json({ error: "Choose an image, PDF, or video file." }, 400);
+      return json({ error: "Choose an image, PDF, or video file." }, 400, request);
     }
 
     const kind = getFileKind(uploaded.type);
     if (!kind) {
-      return json({ error: "Only images, PDFs, and videos are supported." }, 400);
+      return json(
+        { error: "Only images, PDFs, and videos are supported." },
+        400,
+        request,
+      );
     }
 
     const file: StoredFile = {
@@ -94,7 +125,7 @@ export default async (request: Request): Promise<Response> => {
       store.setJSON(`${metadataPrefix}${file.id}.json`, file),
     ]);
 
-    return json(toResponse(file, url.origin), 201);
+    return json(toResponse(file, url.origin), 201, request);
   }
 
   const contentMatch = route.match(/^\/files\/([^/]+)\/(?:content|[^/]+)$/);
@@ -103,7 +134,7 @@ export default async (request: Request): Promise<Response> => {
     const file = await store.get(`${metadataPrefix}${id}.json`, {
       type: "json",
     }) as StoredFile | null;
-    if (!file) return json({ error: "File not found." }, 404);
+    if (!file) return json({ error: "File not found." }, 404, request);
 
     const blob = await store.get(`${filePrefix}${id}`, { type: "blob" });
     if (!blob) return json({ error: "File not found." }, 404);
@@ -114,6 +145,7 @@ export default async (request: Request): Promise<Response> => {
         "Content-Length": String(file.size),
         "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(file.name)}`,
         "Cache-Control": "public, max-age=31536000, immutable",
+        ...corsHeaders(request),
       },
     });
   }
@@ -123,14 +155,17 @@ export default async (request: Request): Promise<Response> => {
     const id = decodeURIComponent(deleteMatch[1]);
     const metadataKey = `${metadataPrefix}${id}.json`;
     const file = await store.get(metadataKey, { type: "json" });
-    if (!file) return json({ error: "File not found." }, 404);
+    if (!file) return json({ error: "File not found." }, 404, request);
 
     await Promise.all([
       store.delete(`${filePrefix}${id}`),
       store.delete(metadataKey),
     ]);
-    return new Response(null, { status: 204 });
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders(request),
+    });
   }
 
-  return json({ error: "Not found." }, 404);
+  return json({ error: "Not found." }, 404, request);
 };
